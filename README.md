@@ -8,11 +8,9 @@ StyleGAN3的编码器。
 
 训练结果：
 
-![](imgs\0037800.jpg)
+![](https://github.com/dayu1979/stylegan3encoder/blob/master/imgs/0037800.jpg)
 
-
-
-![](imgs\0048000.jpg)
+![](https://github.com/dayu1979/stylegan3encoder/blob/master/imgs/0048000.jpg)
 
 使用方法：先检出代码，百度网盘下载pt文件，运行命令行
 
