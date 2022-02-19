@@ -1,5 +1,29 @@
 # stylegan3encoder
 
+2022.2.19更新说明
+
+增加训练代码和脚本
+
+如果要训练自己的编码器，
+
+1，需要准备数据集：
+
+修改configs/paths_config.py 设置对应的路径
+
+2，修改traint.sh里面的参数为你的具体路径
+
+--stylegan_weights=pretrained_models/stylegan3-t-ffhq-1024x1024.pkl \
+
+然后 运行sh traint.sh
+
+如果需要继续训练，可打开traint.sh最后一行注释：
+
+--checkpoint_path best_model.pt 
+
+
+
+项目介绍：
+
 an Encoder for StyleGAN3.
 
 StyleGAN3的编码器。

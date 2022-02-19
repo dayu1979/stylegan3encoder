@@ -28,13 +28,6 @@ class pSp(nn.Module):
             
             G_kwargs = dnnlib.EasyDict(class_name='training.networks_stylegan3.Generator', z_dim=512, w_dim=512, mapping_kwargs=dnnlib.EasyDict())
             self.decoder=dnnlib.util.construct_class_by_name(**G_kwargs, **common_kwargs)
-            '''
-            with dnnlib.util.open_url(self.opts.stylegan_weights) as f:
-                self.decoder = legacy.load_network_pkl(f)['G_ema']#.to(device) # type: ignore
-                def get_latent(z):
-                    return self.decoder.mapping(z, None, truncation_psi=1.0, truncation_cutoff=8)
-                self.decoder.get_latent =get_latent
-                '''
         else:
             self.decoder =Generator(opts.stylegan_size, 512, 8, channel_multiplier=2)
         
@@ -68,9 +61,16 @@ class pSp(nn.Module):
             encoder_ckpt = torch.load(model_paths['ir_se50'])
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
             print('Loading decoder weights from pretrained!')
-            ckpt = torch.load(self.opts.stylegan_weights)
-            self.decoder.load_state_dict(ckpt['g_ema'], strict=False)
-            self.__load_latent_avg(ckpt, repeat=self.encoder.style_count)
+            if "stylegan3" in self.opts.stylegan_weights:
+                with dnnlib.util.open_url(self.opts.stylegan_weights) as f:
+                    self.decoder = legacy.load_network_pkl(f)['G_ema']#.to(device) # type: ignore
+                    def get_latent(z):
+                        return self.decoder.mapping(z, None, truncation_psi=1.0, truncation_cutoff=8)
+                    self.decoder.get_latent =get_latent
+            else:
+                ckpt = torch.load(self.opts.stylegan_weights)
+                self.decoder.load_state_dict(ckpt['g_ema'], strict=False)
+                self.__load_latent_avg(ckpt, repeat=self.encoder.style_count)
 
     def forward(self, x, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
                 inject_latent=None, return_latents=False, alpha=None):
@@ -96,10 +96,14 @@ class pSp(nn.Module):
                     codes[:, i] = 0
 
         input_is_latent = not input_code
-        images, result_latent = self.decoder([codes],
-                                             input_is_latent=input_is_latent,
-                                             randomize_noise=randomize_noise,
-                                             return_latents=return_latents)
+        if "stylegan3" in self.opts.stylegan_weights:
+            images=self.decoder.synthesis(codes, noise_mode='const', force_fp32=False)
+            result_latent=codes
+        else:
+            images, result_latent = self.decoder([codes],
+                                                input_is_latent=input_is_latent,
+                                                randomize_noise=randomize_noise,
+                                                return_latents=return_latents)
 
         if resize:
             images = self.face_pool(images)
